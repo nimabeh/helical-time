@@ -1,9 +1,9 @@
 <div align="center">
 
-# 🪐 Time Torus 3D Clock
+# 🪐 Helical Time
 ### A Continuous Helical Torus ($S^1 \times S^1$) Chronometer
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-nimabeh.github.io%2Ftime--torus-22c55e?style=for-the-badge&logo=googlechrome&logoColor=white)](https://nimabeh.github.io/time-torus/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-nimabeh.github.io%2Fhelical--time-22c55e?style=for-the-badge&logo=googlechrome&logoColor=white)](https://nimabeh.github.io/helical-time/)
 
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react)](https://react.dev/)
 [![Three.js](https://img.shields.io/badge/Three.js-r186-black?style=flat-square&logo=threedotjs)](https://threejs.org/)
@@ -11,7 +11,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 
 <p align="center">
-  <a href="https://nimabeh.github.io/time-torus/">
+  <a href="https://nimabeh.github.io/helical-time/">
     <strong>Explore Live 3D Experience »</strong>
   </a>
 </p>
@@ -75,10 +75,10 @@ where $t \in [0, 1)$ represents the fractional progression of the 24-hour solar 
 
 ```bash
 # Clone the repository
-git clone https://github.com/nimabeh/time-torus.git
+git clone https://github.com/nimabeh/helical-time.git
 
 # Navigate into project directory
-cd time-torus
+cd helical-time
 
 # Install dependencies
 npm install
