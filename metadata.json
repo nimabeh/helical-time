@@ -1,0 +1,6 @@
+{
+  "name": "Aurora Helical 3D Clock",
+  "description": "An interactive 3D clock featuring a 24-loop helical torus spring constellation, glowing neon green spark time node, aurora borealis skies, and micro-spiral zoom.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
