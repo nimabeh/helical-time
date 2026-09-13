@@ -1,5 +1,6 @@
 {
-  "name": "react-example",
+  "name": "time-torus",
+  "homepage": "https://nimabeh.github.io/time-torus/",
   "private": true,
   "version": "0.0.0",
   "type": "module",
