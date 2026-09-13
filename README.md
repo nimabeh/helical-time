@@ -4,6 +4,7 @@
 ### A Continuous Helical Torus ($S^1 \times S^1$) Chronometer
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-nimabeh.github.io%2Ftime--torus-22c55e?style=for-the-badge&logo=googlechrome&logoColor=white)](https://nimabeh.github.io/time-torus/)
+
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react)](https://react.dev/)
 [![Three.js](https://img.shields.io/badge/Three.js-r186-black?style=flat-square&logo=threedotjs)](https://threejs.org/)
 [![Vite](https://img.shields.io/badge/Vite-6-646CFF?style=flat-square&logo=vite)](https://vitejs.dev/)
@@ -29,15 +30,14 @@ This project reimagines time as a single, unbroken 1D space curve winding throug
 
 ## 📐 Spatial Perspectives & Recursive Geometry
 
-* **Front View (24h Macro):** Displays the macro-rhythm of the 24-hour cycle across the main circular path, allowing immediate perception of the day’s progression.
-* **Side View (Poloidal Depth):** Rotates perspective to reveal the depth of the 24 loops, showing hours and minutes as continuous spirals wrapping around the torus tube.
-* **Recursive Geometry (Hours → Minutes → Seconds):** Minutes and seconds follow the exact same toroidal logic. Seconds form micro-helices nested seamlessly within the minute coils, eliminating discrete mechanical "ticks" in favor of uninterrupted cosmic flow.
+* **Torus View (24h Macro):** Displays the full 24-hour cycle across the helical ring, revealing the depth of the 24 poloidal loops wrapping around the torus tube.
+* **Recursive Micro-Spirals (Seconds Flow):** Minutes and seconds follow the exact same toroidal logic. Seconds form micro-helices nested seamlessly within the minute coils, eliminating discrete mechanical "ticks" in favor of continuous 3D flow.
 
 ---
 
 ## ☀️ Dynamic Solar Synchronization
 
-* **Silent IP-Based Solar Tracking:** Detects approximate location without intrusive permission prompts to calculate precise astronomical sunrise and sunset times.
+* **IP-Based Solar Tracking:** Detects your approximate location to calculate precise astronomical sunrise and sunset times in real time.
 * **Celestial Wire Markers:** Exact sunrise and sunset coordinates are anchored directly onto the 3D helical wire. Hovering over either marker reveals the astronomical time.
 * **Atmospheric Tone Shift:** The environmental palette continuously shifts from warm solar daylight to deep Aurora Borealis night skies as the active time spark crosses the solar threshold.
 
@@ -50,7 +50,7 @@ This project reimagines time as a single, unbroken 1D space curve winding throug
 | **Orbit & Rotate** | Left Click + Drag / Touch Drag |
 | **Pan Camera** | Right Click + Drag / Two-finger Drag |
 | **Zoom in / out** | Scroll Wheel / Pinch to Zoom |
-| **Perspective Presets** | **Front View** (12h/24h overview), **Torus View** (oblique 3D), **Seconds View** (tight zoom into micro-spirals) |
+| **View Modes** | **Torus View** (24-hour macro overview) and **Seconds View** (tight camera glide tracking the active micro-spirals) |
 | **Atmospheric Lighting** | **Auto** (solar synced), **Day** (warm solar ambient), **Night** (aurora borealis) |
 
 ---
@@ -89,9 +89,3 @@ npm run dev
 # Build production bundle
 npm run build
 ```
-
----
-
-<div align="center">
-  <sub>Engineered with Three.js, WebGL Post-Processing, and React 19.</sub>
-</div>
