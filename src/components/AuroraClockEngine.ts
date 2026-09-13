@@ -98,7 +98,7 @@ export class AuroraClockEngine {
 
   // Camera & Focus
   public focusMode: CameraFocusMode = 'ring';
-  private defaultCameraPos = new THREE.Vector3(0, 0, 48); // Perfectly frames the entire 32.4-diameter torus
+  private defaultCameraPos = new THREE.Vector3(0, 0, 48);
   private defaultTarget = new THREE.Vector3(0, 0, 0);
   private targetLookAt = new THREE.Vector3(0, 0, 0);
   private activeNodeWorldPos = new THREE.Vector3();
@@ -108,6 +108,19 @@ export class AuroraClockEngine {
   // Aurora Warmth (0.0 = Night, 1.0 = Daytime Warmth)
   public auroraWarmthOverride: 'auto' | 'day' | 'night' = 'auto';
 
+  /**
+   * Dynamically calculate camera Z distance to ensure the full 3D helical torus
+   * is framed from the front view regardless of aspect ratio (desktop, tablet, or narrow mobile portrait).
+   */
+  private calculateOptimalCameraZ(aspect: number): number {
+    const targetRadius = 18.5; // Bounds the entire 16.2-radius torus + numerals with aesthetic breathing room
+    const vFovRad = (this.camera.fov * Math.PI) / 180;
+    const halfTan = Math.tan(vFovRad / 2);
+    const distV = targetRadius / halfTan;
+    const distH = targetRadius / (halfTan * Math.max(0.2, aspect));
+    return Math.max(distV, distH);
+  }
+
   constructor(container: HTMLElement, callbacks: SceneCallbacks) {
     this.container = container;
     this.callbacks = callbacks;
@@ -116,9 +129,11 @@ export class AuroraClockEngine {
     this.scene = new THREE.Scene();
     this.scene.fog = new THREE.FogExp2(0x020617, 0.007);
 
-    // 2. Camera setup
-    const aspect = container.clientWidth / container.clientHeight;
+    // 2. Camera setup with responsive distance
+    const aspect = container.clientWidth / (container.clientHeight || 1);
     this.camera = new THREE.PerspectiveCamera(42, aspect, 0.1, 1000);
+    const initialZ = this.calculateOptimalCameraZ(aspect);
+    this.defaultCameraPos.set(0, 0, initialZ);
     this.camera.position.copy(this.defaultCameraPos);
 
     // 3. Renderer setup
@@ -142,7 +157,7 @@ export class AuroraClockEngine {
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
     this.controls.minDistance = 1.2;
-    this.controls.maxDistance = 100;
+    this.controls.maxDistance = Math.max(250, initialZ * 2.5);
     this.controls.maxPolarAngle = Math.PI * 0.95;
     this.controls.target.copy(this.defaultTarget);
 
@@ -994,9 +1009,21 @@ export class AuroraClockEngine {
     if (!this.container) return;
     const w = this.container.clientWidth;
     const h = this.container.clientHeight;
+    if (w === 0 || h === 0) return;
 
-    this.camera.aspect = w / h;
+    const aspect = w / h;
+    this.camera.aspect = aspect;
     this.camera.updateProjectionMatrix();
+
+    const optimalZ = this.calculateOptimalCameraZ(aspect);
+    this.defaultCameraPos.set(0, 0, optimalZ);
+    this.controls.maxDistance = Math.max(250, optimalZ * 2.5);
+
+    // If currently in Ring / Front Torus mode and not actively dragging, keep it framed
+    if (this.focusMode === 'ring' && !this.isUserInteracting) {
+      this.camera.position.set(0, 0, optimalZ);
+      this.controls.target.copy(this.defaultTarget);
+    }
 
     this.renderer.setSize(w, h);
     this.composer.setSize(w, h);

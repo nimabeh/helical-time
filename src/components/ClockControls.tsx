@@ -40,20 +40,20 @@ export const ClockControls: React.FC<ClockControlsProps> = ({
   const formatDigits = (n: number) => n.toString().padStart(2, '0');
 
   return (
-    <div className="pointer-events-none absolute inset-0 select-none overflow-hidden flex flex-col justify-between p-4 md:p-6 z-10">
+    <div className="pointer-events-none fixed inset-0 select-none overflow-hidden flex flex-col justify-between p-3 sm:p-5 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))] pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] z-20">
       {/* Top Header Row: Corners 1 & 2 */}
-      <header className="flex items-start justify-between w-full">
+      <header className="flex items-start justify-between w-full pointer-events-none gap-2">
         {/* Corner 1 (Top Left): Live Celestial Readout */}
         <div 
           id="clock-time-display"
           title={solarInfo ? `Local Time • ${solarInfo.cityName} (Sunrise: ${solarInfo.sunriseFormatted} | Sunset: ${solarInfo.sunsetFormatted})` : 'Live Local Time'}
-          className="pointer-events-auto h-9 px-3.5 flex items-center justify-center gap-2.5 rounded-full backdrop-blur-md bg-slate-950/60 border border-cyan-500/25 shadow-[0_0_15px_rgba(6,182,212,0.1)] cursor-default"
+          className="pointer-events-auto h-9 sm:h-10 px-3 sm:px-3.5 flex items-center justify-center gap-2 rounded-full backdrop-blur-md bg-slate-950/75 border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.15)] cursor-default"
         >
           <div className="relative flex items-center justify-center">
             <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse" />
           </div>
           {clockTime && (
-            <div className="flex items-baseline gap-1 font-mono text-xs tracking-wider text-cyan-100">
+            <div className="flex items-baseline gap-1 font-mono text-[11px] sm:text-xs tracking-wider text-cyan-100">
               <span className="font-semibold text-emerald-300">{formatDigits(clockTime.hours)}</span>
               <span className="text-cyan-400/60">:</span>
               <span className="font-semibold text-cyan-200">{formatDigits(clockTime.minutes)}</span>
@@ -68,12 +68,12 @@ export const ClockControls: React.FC<ClockControlsProps> = ({
           id="tone-mode-button"
           onClick={onCycleWarmth}
           title={`Tone: ${warmthMode.toUpperCase()} (Click to toggle)`}
-          className={`pointer-events-auto h-9 px-3.5 flex items-center justify-center gap-1.5 rounded-full backdrop-blur-md border text-xs font-medium transition-all duration-200 shadow-[0_0_15px_rgba(6,182,212,0.1)] ${
+          className={`pointer-events-auto touch-manipulation h-9 sm:h-10 px-3 sm:px-3.5 flex items-center justify-center gap-1.5 rounded-full backdrop-blur-md border text-[11px] sm:text-xs font-medium transition-all duration-200 shadow-[0_0_15px_rgba(6,182,212,0.15)] ${
             warmthMode === 'day'
               ? 'bg-amber-500/20 border-amber-400/50 text-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.25)]'
               : warmthMode === 'night'
               ? 'bg-indigo-500/20 border-cyan-400/50 text-cyan-200 shadow-[0_0_15px_rgba(6,182,212,0.25)]'
-              : 'bg-slate-950/60 border-cyan-500/25 text-slate-200 hover:text-cyan-200 hover:border-cyan-500/40'
+              : 'bg-slate-950/75 border-cyan-500/30 text-slate-200 hover:text-cyan-200 hover:border-cyan-500/50 active:scale-95'
           }`}
         >
           {warmthMode === 'day' ? (
@@ -96,16 +96,16 @@ export const ClockControls: React.FC<ClockControlsProps> = ({
       </header>
 
       {/* Bottom Footer Row: Corners 3 & 4 */}
-      <footer className="w-full flex items-center justify-between">
+      <footer className="w-full flex items-center justify-between pointer-events-none gap-2">
         {/* Corner 3 (Bottom Left): Single Button for Seconds View / Torus View */}
         <button
           id="view-toggle-button"
           onClick={onToggleFocus}
           title={focusMode === 'node' ? 'Reset to Torus View' : 'Zoom into Micro Spiral (Seconds View)'}
-          className={`pointer-events-auto h-9 px-3.5 flex items-center justify-center gap-1.5 rounded-full backdrop-blur-md border text-xs font-medium transition-all duration-200 shadow-[0_0_15px_rgba(6,182,212,0.1)] ${
+          className={`pointer-events-auto touch-manipulation h-9 sm:h-10 px-3 sm:px-3.5 flex items-center justify-center gap-1.5 rounded-full backdrop-blur-md border text-[11px] sm:text-xs font-medium transition-all duration-200 shadow-[0_0_15px_rgba(6,182,212,0.15)] active:scale-95 ${
             focusMode === 'node'
               ? 'bg-emerald-500/20 border-emerald-400/50 text-emerald-200 shadow-[0_0_15px_rgba(52,211,153,0.25)]'
-              : 'bg-slate-950/60 border-cyan-500/25 text-slate-200 hover:text-cyan-200 hover:border-cyan-500/40'
+              : 'bg-slate-950/75 border-cyan-500/30 text-slate-200 hover:text-cyan-200 hover:border-cyan-500/50'
           }`}
         >
           {focusMode === 'node' ? (
@@ -123,10 +123,10 @@ export const ClockControls: React.FC<ClockControlsProps> = ({
 
         {/* Corner 4 (Bottom Right): Simulation & Live Time Controls */}
         {isSimulating ? (
-          <div className="pointer-events-auto h-9 px-2 flex items-center gap-1 rounded-full backdrop-blur-md bg-slate-950/60 border border-emerald-500/40 shadow-[0_0_15px_rgba(52,211,153,0.2)]">
+          <div className="pointer-events-auto touch-manipulation h-9 sm:h-10 px-2 flex items-center gap-1 rounded-full backdrop-blur-md bg-slate-950/75 border border-emerald-500/40 shadow-[0_0_15px_rgba(52,211,153,0.2)]">
             <button
               onClick={onToggleSimulation}
-              className="h-7 px-2 flex items-center gap-1.5 rounded-full text-xs font-medium text-emerald-200 hover:bg-emerald-500/20 transition-colors"
+              className="h-7 sm:h-8 px-2 flex items-center gap-1.5 rounded-full text-[11px] sm:text-xs font-medium text-emerald-200 hover:bg-emerald-500/20 active:scale-95 transition-all"
               title="Return to Live Time"
             >
               <Play className="w-3 h-3 text-emerald-400 fill-emerald-400" />
@@ -137,7 +137,7 @@ export const ClockControls: React.FC<ClockControlsProps> = ({
                 <button
                   key={spd}
                   onClick={() => onChangeSpeed(spd)}
-                  className={`h-6 px-1.5 rounded-full text-[10px] font-mono transition-colors ${
+                  className={`h-6 sm:h-7 px-1.5 rounded-full text-[10px] font-mono transition-colors active:scale-95 ${
                     simulationSpeed === spd
                       ? 'bg-emerald-400/25 text-emerald-200 font-semibold'
                       : 'text-slate-400 hover:text-slate-200'
@@ -153,7 +153,7 @@ export const ClockControls: React.FC<ClockControlsProps> = ({
             id="simulate-toggle-button"
             onClick={onToggleSimulation}
             title="Start Fast-Forward Simulation"
-            className="pointer-events-auto h-9 px-3.5 flex items-center justify-center gap-1.5 rounded-full backdrop-blur-md bg-slate-950/60 border border-cyan-500/25 text-xs font-medium text-slate-200 hover:text-cyan-200 hover:border-cyan-500/40 transition-all duration-200 shadow-[0_0_15px_rgba(6,182,212,0.1)]"
+            className="pointer-events-auto touch-manipulation h-9 sm:h-10 px-3 sm:px-3.5 flex items-center justify-center gap-1.5 rounded-full backdrop-blur-md bg-slate-950/75 border border-cyan-500/30 text-[11px] sm:text-xs font-medium text-slate-200 hover:text-cyan-200 hover:border-cyan-500/50 transition-all duration-200 shadow-[0_0_15px_rgba(6,182,212,0.15)] active:scale-95"
           >
             <Play className="w-3.5 h-3.5 text-cyan-300" />
             <span>Simulate</span>

@@ -100,7 +100,7 @@ export default function App() {
   };
 
   return (
-    <main className="relative w-screen h-screen overflow-hidden bg-slate-950 select-none">
+    <main className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-slate-950 select-none touch-none">
       {/* Three.js 3D WebGL Canvas Container */}
       <div
         id="aurora-clock-canvas-container"
