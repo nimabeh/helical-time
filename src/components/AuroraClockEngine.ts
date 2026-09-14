@@ -62,6 +62,10 @@ export class AuroraClockEngine {
   public currentSolarInfo: SolarInfo | null = null;
   private raycaster = new THREE.Raycaster();
   private mouse = new THREE.Vector2(-1000, -1000);
+  private pointerDownPos = new THREE.Vector2();
+  private pointerDownTime = 0;
+  private activeSolarMarker: 'sunrise' | 'sunset' | null = null;
+  private solarMarkerHideTimeout: number | null = null;
 
   // 6. Glowing Active Spark Time Indicator & Dust
   private activeNodeGroup!: THREE.Group;
@@ -148,9 +152,11 @@ export class AuroraClockEngine {
     this.renderer.toneMappingExposure = 1.1;
     container.appendChild(this.renderer.domElement);
 
-    // Pointer hover tracking for interactive solar indicator tooltips
+    // Pointer tracking & click/tap detection for interactive solar indicator tooltips
     this.renderer.domElement.addEventListener('pointermove', this.onPointerMove);
     this.renderer.domElement.addEventListener('pointerleave', this.onPointerLeave);
+    this.renderer.domElement.addEventListener('pointerdown', this.onPointerDown);
+    this.renderer.domElement.addEventListener('pointerup', this.onPointerUp);
 
     // 4. OrbitControls with smooth zoom
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -723,16 +729,16 @@ export class AuroraClockEngine {
     this.sunriseCoronaMesh = new THREE.Mesh(coronaGeom, coronaMat);
     this.sunriseMeshGroup.add(this.sunriseCoronaMesh);
 
-    // Invisible larger hover target (0.42 radius) for effortless hovering
+    // Invisible touch/click hit target (0.65 radius) for effortless tapping on mobile
     this.sunriseHitMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(0.42, 8, 8),
+      new THREE.SphereGeometry(0.65, 8, 8),
       new THREE.MeshBasicMaterial({ visible: false })
     );
     this.sunriseMeshGroup.add(this.sunriseHitMesh);
 
     this.sunriseSprite = this.createSolarSprite('SUNRISE', '06:00', '#f59e0b');
     this.sunriseSprite.position.set(0, 0.52, 0);
-    this.sunriseSprite.visible = false; // Appears on hover!
+    this.sunriseSprite.visible = false; // Appears on hover/tap!
     this.sunriseMeshGroup.add(this.sunriseSprite);
 
     this.solarIndicatorsGroup.add(this.sunriseMeshGroup);
@@ -759,9 +765,9 @@ export class AuroraClockEngine {
     this.sunsetCoronaMesh = new THREE.Mesh(duskRingGeom, duskRingMat);
     this.sunsetMeshGroup.add(this.sunsetCoronaMesh);
 
-    // Invisible larger hover target (0.42 radius) for effortless hovering
+    // Invisible touch/click hit target (0.65 radius) for effortless tapping on mobile
     this.sunsetHitMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(0.42, 8, 8),
+      new THREE.SphereGeometry(0.65, 8, 8),
       new THREE.MeshBasicMaterial({ visible: false })
     );
     this.sunsetMeshGroup.add(this.sunsetHitMesh);
@@ -875,6 +881,66 @@ export class AuroraClockEngine {
   private onPointerLeave = (): void => {
     this.mouse.set(-1000, -1000);
   };
+
+  private onPointerDown = (e: PointerEvent): void => {
+    this.pointerDownPos.set(e.clientX, e.clientY);
+    this.pointerDownTime = performance.now();
+  };
+
+  private onPointerUp = (e: PointerEvent): void => {
+    const dx = e.clientX - this.pointerDownPos.x;
+    const dy = e.clientY - this.pointerDownPos.y;
+    const dist = Math.hypot(dx, dy);
+    const dt = performance.now() - this.pointerDownTime;
+
+    // Distinguish intentional tap/click from camera orbit/pan drag (movement < 10px, duration < 450ms)
+    if (dist < 10 && dt < 450) {
+      const rect = this.renderer.domElement.getBoundingClientRect();
+      const clickMouse = new THREE.Vector2(
+        ((e.clientX - rect.left) / rect.width) * 2 - 1,
+        -((e.clientY - rect.top) / rect.height) * 2 + 1
+      );
+      this.raycaster.setFromCamera(clickMouse, this.camera);
+      if (this.sunriseHitMesh && this.sunsetHitMesh) {
+        const intersects = this.raycaster.intersectObjects([this.sunriseHitMesh, this.sunsetHitMesh], false);
+        if (intersects.length > 0) {
+          const hit = intersects[0].object;
+          if (hit === this.sunriseHitMesh) {
+            this.toggleSolarMarker('sunrise');
+          } else if (hit === this.sunsetHitMesh) {
+            this.toggleSolarMarker('sunset');
+          }
+        } else if (this.activeSolarMarker) {
+          // Tapping empty space dismisses open solar time tooltip
+          this.activeSolarMarker = null;
+          if (this.solarMarkerHideTimeout) {
+            window.clearTimeout(this.solarMarkerHideTimeout);
+            this.solarMarkerHideTimeout = null;
+          }
+        }
+      }
+    }
+  };
+
+  private toggleSolarMarker(marker: 'sunrise' | 'sunset'): void {
+    if (this.activeSolarMarker === marker) {
+      this.activeSolarMarker = null;
+      if (this.solarMarkerHideTimeout) {
+        window.clearTimeout(this.solarMarkerHideTimeout);
+        this.solarMarkerHideTimeout = null;
+      }
+    } else {
+      this.activeSolarMarker = marker;
+      if (this.solarMarkerHideTimeout) {
+        window.clearTimeout(this.solarMarkerHideTimeout);
+      }
+      // Keep visible for 5.5 seconds so mobile user can easily read the exact time
+      this.solarMarkerHideTimeout = window.setTimeout(() => {
+        this.activeSolarMarker = null;
+        this.solarMarkerHideTimeout = null;
+      }, 5500);
+    }
+  }
 
   /**
    * Update sunrise and sunset indicators from user local solar calculation
@@ -1140,28 +1206,21 @@ export class AuroraClockEngine {
       this.sunsetCoronaMesh.rotation.z -= delta * 0.6;
     }
 
-    // Hover raycasting for astronomical sunrise/sunset indicators
+    // Interactive astronomical sunrise/sunset indicators (clickable on mobile/touch & hoverable on desktop)
     if (this.sunriseHitMesh && this.sunsetHitMesh) {
       this.raycaster.setFromCamera(this.mouse, this.camera);
       const intersects = this.raycaster.intersectObjects([this.sunriseHitMesh, this.sunsetHitMesh], false);
       let isHovering = false;
+      let hoveredObj: THREE.Object3D | null = null;
       if (intersects.length > 0) {
-        const hit = intersects[0].object;
-        if (hit === this.sunriseHitMesh) {
-          this.sunriseSprite.visible = true;
-          this.sunsetSprite.visible = false;
-          isHovering = true;
-        } else if (hit === this.sunsetHitMesh) {
-          this.sunsetSprite.visible = true;
-          this.sunriseSprite.visible = false;
-          isHovering = true;
-        }
-      } else {
-        this.sunriseSprite.visible = false;
-        this.sunsetSprite.visible = false;
+        hoveredObj = intersects[0].object;
+        isHovering = true;
       }
 
-      if (isHovering) {
+      this.sunriseSprite.visible = (this.activeSolarMarker === 'sunrise') || (hoveredObj === this.sunriseHitMesh);
+      this.sunsetSprite.visible = (this.activeSolarMarker === 'sunset') || (hoveredObj === this.sunsetHitMesh);
+
+      if (isHovering || this.activeSolarMarker) {
         this.renderer.domElement.style.cursor = 'pointer';
       } else if (!this.isUserInteracting) {
         this.renderer.domElement.style.cursor = 'grab';
@@ -1271,8 +1330,14 @@ export class AuroraClockEngine {
   };
 
   public dispose(): void {
+    if (this.solarMarkerHideTimeout) {
+      window.clearTimeout(this.solarMarkerHideTimeout);
+      this.solarMarkerHideTimeout = null;
+    }
     this.renderer.domElement.removeEventListener('pointermove', this.onPointerMove);
     this.renderer.domElement.removeEventListener('pointerleave', this.onPointerLeave);
+    this.renderer.domElement.removeEventListener('pointerdown', this.onPointerDown);
+    this.renderer.domElement.removeEventListener('pointerup', this.onPointerUp);
     window.removeEventListener('resize', this.onResize);
     if (this.animationFrameId !== null) {
       cancelAnimationFrame(this.animationFrameId);
