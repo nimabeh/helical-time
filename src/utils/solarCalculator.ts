@@ -190,7 +190,7 @@ export async function getLocalSolarInfo(date: Date = new Date()): Promise<SolarI
   );
 
   const formatTime = (d: Date) =>
-    `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+    `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
 
   const currentHours = date.getHours() + date.getMinutes() / 60;
   const isDaytime = currentHours >= sunriseFraction * 24 && currentHours < sunsetFraction * 24;

@@ -14,8 +14,9 @@ import {
   MICRO_RADIUS,
   TOTAL_HOURS,
 } from '../utils/clockMath';
-import { CameraFocusMode } from '../types';
+import { CameraFocusMode, AppLanguage } from '../types';
 import { SolarInfo } from '../utils/solarCalculator';
+import { toFarsiDigits, formatFarsiNumber } from '../utils/farsiDigits';
 
 export interface SceneCallbacks {
   onTimeUpdate: (time: ReturnType<typeof calculateClockTime>) => void;
@@ -23,6 +24,7 @@ export interface SceneCallbacks {
 }
 
 export class AuroraClockEngine {
+  public language: AppLanguage = 'fa';
   private container: HTMLElement;
   private scene: THREE.Scene;
   private camera: THREE.PerspectiveCamera;
@@ -48,6 +50,7 @@ export class AuroraClockEngine {
 
   // 4. Inner Hour Numbers (00 - 23 on inner rim)
   private hourNumbersGroup!: THREE.Group;
+  private hourNumberSprites: THREE.Sprite[] = [];
 
   // 5. Solar Indicators (Sunrise & Sunset directly on the wire)
   private solarIndicatorsGroup!: THREE.Group;
@@ -213,6 +216,14 @@ export class AuroraClockEngine {
     getPositionAtTimeFraction(this.currentDayFraction, false, this.activeHourCenterPos);
 
     window.addEventListener('resize', this.onResize);
+
+    if (typeof document !== 'undefined' && document.fonts) {
+      document.fonts.ready.then(() => {
+        this.updateAllHourNumerals();
+        this.updateAllSolarIndicators();
+      });
+    }
+
     this.animate();
   }
 
@@ -620,6 +631,7 @@ export class AuroraClockEngine {
    */
   private createInnerHourNumerals(): void {
     this.hourNumbersGroup = new THREE.Group();
+    this.hourNumberSprites = [];
 
     // Radius comfortably inside the torus inner rim
     const innerRadius = MAJOR_RADIUS - MINOR_RADIUS - 0.9;
@@ -630,10 +642,12 @@ export class AuroraClockEngine {
       const x = innerRadius * Math.cos(phi);
       const y = -innerRadius * Math.sin(phi); // Flipped Y so 12 is top
 
-      const labelText = h.toString().padStart(2, '0');
+      const isFa = this.language === 'fa';
+      const labelText = isFa ? formatFarsiNumber(h, 1) : h.toString();
       const sprite = this.createNumberSprite(labelText);
       sprite.position.set(x, y, 0.2); // Positioned slightly in front of the torus plane
       this.hourNumbersGroup.add(sprite);
+      this.hourNumberSprites.push(sprite);
 
       // Clean subtle indicator tick from number to the hour meridian
       const tickGeom = new THREE.BufferGeometry();
@@ -656,18 +670,16 @@ export class AuroraClockEngine {
   }
 
   /**
-   * Plain numbers with green color (no glow, no blur, high contrast)
+   * Render number onto canvas with appropriate typography (Katibeh for Farsi, monospace for English)
    */
-  private createNumberSprite(text: string): THREE.Sprite {
-    const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 256;
+  private renderNumberSpriteCanvas(canvas: HTMLCanvasElement, text: string): void {
     const ctx = canvas.getContext('2d')!;
-
     ctx.clearRect(0, 0, 256, 256);
 
-    // Plain, bold, razor-sharp numerals
-    ctx.font = 'bold 96px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace';
+    const isFa = this.language === 'fa';
+    ctx.font = isFa
+      ? 'bold 100px "Katibeh", cursive, sans-serif'
+      : 'bold 96px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
@@ -680,6 +692,16 @@ export class AuroraClockEngine {
     // Plain vivid green color as requested (no shadow blur, no glow)
     ctx.fillStyle = '#22c55e'; // Bright, solid emerald green
     ctx.fillText(text, 128, 128);
+  }
+
+  /**
+   * Plain numbers with green color (no glow, no blur, high contrast)
+   */
+  private createNumberSprite(text: string): THREE.Sprite {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    this.renderNumberSpriteCanvas(canvas, text);
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.minFilter = THREE.LinearFilter;
@@ -698,6 +720,21 @@ export class AuroraClockEngine {
     sprite.renderOrder = 999;
     sprite.scale.set(1.5, 1.5, 1.0);
     return sprite;
+  }
+
+  public updateAllHourNumerals(): void {
+    const isFa = this.language === 'fa';
+    for (let h = 0; h < TOTAL_HOURS; h++) {
+      const sprite = this.hourNumberSprites[h];
+      if (sprite) {
+        const texture = sprite.material.map as THREE.CanvasTexture;
+        if (texture && texture.image) {
+          const labelText = isFa ? formatFarsiNumber(h, 1) : h.toString();
+          this.renderNumberSpriteCanvas(texture.image as HTMLCanvasElement, labelText);
+          texture.needsUpdate = true;
+        }
+      }
+    }
   }
 
   /**
@@ -736,7 +773,12 @@ export class AuroraClockEngine {
     );
     this.sunriseMeshGroup.add(this.sunriseHitMesh);
 
-    this.sunriseSprite = this.createSolarSprite('SUNRISE', '06:00', '#f59e0b');
+    const isFa = this.language === 'fa';
+    this.sunriseSprite = this.createSolarSprite(
+      isFa ? 'طلوع' : 'SUNRISE',
+      isFa ? toFarsiDigits('06:00') : '06:00',
+      '#f59e0b'
+    );
     this.sunriseSprite.position.set(0, 0.52, 0);
     this.sunriseSprite.visible = false; // Appears on hover/tap!
     this.sunriseMeshGroup.add(this.sunriseSprite);
@@ -772,7 +814,11 @@ export class AuroraClockEngine {
     );
     this.sunsetMeshGroup.add(this.sunsetHitMesh);
 
-    this.sunsetSprite = this.createSolarSprite('SUNSET', '18:00', '#f43f5e');
+    this.sunsetSprite = this.createSolarSprite(
+      isFa ? 'غروب' : 'SUNSET',
+      isFa ? toFarsiDigits('18:00') : '18:00',
+      '#f43f5e'
+    );
     this.sunsetSprite.position.set(0, 0.52, 0);
     this.sunsetSprite.visible = false; // Appears on hover!
     this.sunsetMeshGroup.add(this.sunsetSprite);
@@ -845,11 +891,16 @@ export class AuroraClockEngine {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    const isFa = this.language === 'fa';
+    ctx.font = isFa
+      ? 'bold 28px "Katibeh", cursive, sans-serif'
+      : 'bold 22px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.fillStyle = accentColor;
     ctx.fillText(label, canvas.width / 2, 40);
 
-    ctx.font = 'bold 36px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace';
+    ctx.font = isFa
+      ? 'bold 40px "Katibeh", cursive, monospace'
+      : 'bold 36px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace';
     ctx.strokeStyle = '#020617';
     ctx.lineWidth = 6;
     ctx.lineJoin = 'round';
@@ -942,6 +993,29 @@ export class AuroraClockEngine {
     }
   }
 
+  public updateAllSolarIndicators(): void {
+    if (!this.sunriseSprite || !this.sunsetSprite) return;
+    const isFa = this.language === 'fa';
+    const sunriseLabel = isFa ? 'طلوع' : 'SUNRISE';
+    const sunsetLabel = isFa ? 'غروب' : 'SUNSET';
+
+    const rawSunrise = this.currentSolarInfo ? this.currentSolarInfo.sunriseFormatted : '6:00';
+    const rawSunset = this.currentSolarInfo ? this.currentSolarInfo.sunsetFormatted : '18:00';
+
+    const sunriseTime = isFa ? toFarsiDigits(rawSunrise) : rawSunrise;
+    const sunsetTime = isFa ? toFarsiDigits(rawSunset) : rawSunset;
+
+    this.updateSolarSprite(this.sunriseSprite, sunriseLabel, sunriseTime, '#f59e0b');
+    this.updateSolarSprite(this.sunsetSprite, sunsetLabel, sunsetTime, '#f43f5e');
+  }
+
+  public setLanguage(lang: AppLanguage): void {
+    if (this.language === lang) return;
+    this.language = lang;
+    this.updateAllHourNumerals();
+    this.updateAllSolarIndicators();
+  }
+
   /**
    * Update sunrise and sunset indicators from user local solar calculation
    */
@@ -955,8 +1029,7 @@ export class AuroraClockEngine {
     const sunsetPos = getPositionAtTimeFraction(info.sunsetDayFraction, false);
     this.sunsetMeshGroup.position.copy(sunsetPos);
 
-    this.updateSolarSprite(this.sunriseSprite, 'SUNRISE', info.sunriseFormatted, '#f59e0b');
-    this.updateSolarSprite(this.sunsetSprite, 'SUNSET', info.sunsetFormatted, '#f43f5e');
+    this.updateAllSolarIndicators();
   }
 
   /**

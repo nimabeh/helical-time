@@ -6,18 +6,27 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AuroraClockEngine } from './components/AuroraClockEngine';
 import { ClockControls } from './components/ClockControls';
-import { ClockTime, CameraFocusMode } from './types';
+import { ClockTime, CameraFocusMode, AppLanguage } from './types';
 import { getLocalSolarInfo, SolarInfo } from './utils/solarCalculator';
 
 export default function App() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const engineRef = useRef<AuroraClockEngine | null>(null);
 
+  const [language, setLanguage] = useState<AppLanguage>(() => {
+    try {
+      const saved = localStorage.getItem('helical_clock_lang');
+      if (saved === 'en' || saved === 'fa') return saved;
+    } catch {
+      // fallback
+    }
+    return 'fa';
+  });
+
   const [clockTime, setClockTime] = useState<ClockTime | null>(null);
   const [focusMode, setFocusMode] = useState<CameraFocusMode>('free');
   const [isSimulating, setIsSimulating] = useState(false);
   const [simulationSpeed, setSimulationSpeed] = useState(60);
-  const [warmthMode, setWarmthMode] = useState<'auto' | 'day' | 'night'>('auto');
   const [solarInfo, setSolarInfo] = useState<SolarInfo | null>(null);
 
   useEffect(() => {
@@ -32,6 +41,7 @@ export default function App() {
       },
     });
 
+    engine.setLanguage(language);
     engineRef.current = engine;
 
     // Fetch local user astronomical solar data (sunrise & sunset)
@@ -53,6 +63,19 @@ export default function App() {
       engineRef.current = null;
     };
   }, []);
+
+  const handleToggleLanguage = () => {
+    const nextLang: AppLanguage = language === 'fa' ? 'en' : 'fa';
+    setLanguage(nextLang);
+    try {
+      localStorage.setItem('helical_clock_lang', nextLang);
+    } catch {
+      // ignore
+    }
+    if (engineRef.current) {
+      engineRef.current.setLanguage(nextLang);
+    }
+  };
 
   const handleSetFocusMode = (mode: CameraFocusMode) => {
     if (!engineRef.current) return;
@@ -90,15 +113,6 @@ export default function App() {
     engineRef.current.simulationSpeed = speed;
   };
 
-  const handleCycleWarmth = () => {
-    if (!engineRef.current) return;
-    const modes: ('auto' | 'day' | 'night')[] = ['auto', 'day', 'night'];
-    const nextIdx = (modes.indexOf(warmthMode) + 1) % modes.length;
-    const nextMode = modes[nextIdx];
-    setWarmthMode(nextMode);
-    engineRef.current.setWarmthMode(nextMode);
-  };
-
   return (
     <main className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-slate-950 select-none touch-none">
       {/* Three.js 3D WebGL Canvas Container */}
@@ -119,9 +133,9 @@ export default function App() {
         simulationSpeed={simulationSpeed}
         onToggleSimulation={handleToggleSimulation}
         onChangeSpeed={handleChangeSpeed}
-        warmthMode={warmthMode}
-        onCycleWarmth={handleCycleWarmth}
         solarInfo={solarInfo}
+        language={language}
+        onToggleLanguage={handleToggleLanguage}
       />
     </main>
   );

@@ -12,6 +12,7 @@ export interface ClockTime {
 }
 
 export type CameraFocusMode = 'free' | 'ring' | 'node';
+export type AppLanguage = 'en' | 'fa';
 
 export interface ClockSettings {
   focusMode: CameraFocusMode;
