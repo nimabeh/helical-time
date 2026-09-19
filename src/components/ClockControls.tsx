@@ -120,7 +120,7 @@ export const ClockControls: React.FC<ClockControlsProps> = ({
               className="flex items-baseline gap-1 tracking-wider text-cyan-100" 
               style={{ 
                 fontFamily: isFa ? '"Katibeh", cursive, monospace' : 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                fontSize: isFa ? '17px' : '12px',
+                fontSize: isFa ? '19px' : '12px',
                 lineHeight: 1,
               }}
             >

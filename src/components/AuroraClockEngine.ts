@@ -678,14 +678,14 @@ export class AuroraClockEngine {
 
     const isFa = this.language === 'fa';
     ctx.font = isFa
-      ? 'bold 100px "Katibeh", cursive, sans-serif'
+      ? 'bold 124px "Katibeh", cursive, sans-serif'
       : 'bold 96px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
     // Solid dark outline (no glow blur) to guarantee high contrast against starry sky & aurora
     ctx.strokeStyle = '#020617';
-    ctx.lineWidth = 14;
+    ctx.lineWidth = isFa ? 16 : 14;
     ctx.lineJoin = 'round';
     ctx.strokeText(text, 128, 128);
 
@@ -718,15 +718,19 @@ export class AuroraClockEngine {
 
     const sprite = new THREE.Sprite(material);
     sprite.renderOrder = 999;
-    sprite.scale.set(1.5, 1.5, 1.0);
+    const isFa = this.language === 'fa';
+    const scale = isFa ? 1.85 : 1.5;
+    sprite.scale.set(scale, scale, 1.0);
     return sprite;
   }
 
   public updateAllHourNumerals(): void {
     const isFa = this.language === 'fa';
+    const scale = isFa ? 1.85 : 1.5;
     for (let h = 0; h < TOTAL_HOURS; h++) {
       const sprite = this.hourNumberSprites[h];
       if (sprite) {
+        sprite.scale.set(scale, scale, 1.0);
         const texture = sprite.material.map as THREE.CanvasTexture;
         if (texture && texture.image) {
           const labelText = isFa ? formatFarsiNumber(h, 1) : h.toString();

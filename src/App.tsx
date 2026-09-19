@@ -20,7 +20,7 @@ export default function App() {
     } catch {
       // fallback
     }
-    return 'fa';
+    return 'en';
   });
 
   const [clockTime, setClockTime] = useState<ClockTime | null>(null);
